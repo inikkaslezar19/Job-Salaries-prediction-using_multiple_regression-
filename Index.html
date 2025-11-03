@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Salaries Prediction with Multiple Regression</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .card h2 {
+            color: #2575fc;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2575fc;
+            box-shadow: 0 0 0 3px rgba(37, 117, 252, 0.2);
+        }
+
+        button {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(37, 117, 252, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            background: #e8f4ff;
+            border-left: 5px solid #2575fc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result h3 {
+            color: #2575fc;
+            margin-bottom: 10px;
+        }
+
+        .predicted-salary {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2575fc;
+            margin: 10px 0;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .explanation {
+            margin-top: 30px;
+            line-height: 1.8;
+        }
+
+        .explanation h3 {
+            color: #2575fc;
+            margin-bottom: 15px;
+        }
+
+        .explanation p {
+            margin-bottom: 15px;
+        }
+
+        .explanation ul {
+            margin-bottom: 15px;
+            padding-left: 20px;
+        }
+
+        .explanation li {
+            margin-bottom: 8px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .predicted-salary {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Loading state */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Job Salaries Prediction</h1>
+            <p class="subtitle">Using Multiple Regression to estimate salaries based on experience, education, location, and industry</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="content">
+            <div class="card">
+                <h2>Salary Prediction</h2>
+                <form id="salaryForm">
+                    <div class="form-group">
+                        <label for="experience">Years of Experience</label>
+                        <input type="number" id="experience" min="0" max="50" value="5" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="education">Education Level</label>
+                        <select id="education" required>
+                            <option value="1">High School</option>
+                            <option value="2">Associate Degree</option>
+                            <option value="3" selected>Bachelor's Degree</option>
+                            <option value="4">Master's Degree</option>
+                            <option value="5">Doctorate</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <select id="location" required>
+                            <option value="1">Small City / Rural</option>
+                            <option value="2" selected>Medium City</option>
+                            <option value="3">Large City</option>
+                            <option value="4">Metropolitan Area</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="industry">Industry</label>
+                        <select id="industry" required>
+                            <option value="1">Retail / Hospitality</option>
+                            <option value="2">Manufacturing</option>
+                            <option value="3" selected>Technology</option>
+                            <option value="4">Finance</option>
+                            <option value="5">Healthcare</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" id="predictBtn">Predict Salary</button>
+                </form>
+                
+                <div class="result" id="result">
+                    <h3>Predicted Salary</h3>
+                    <div class="predicted-salary" id="predictedSalary">$0</div>
+                    <p>Based on your inputs, this is the estimated annual salary.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>How Multiple Regression Works</h2>
+                <div class="explanation">
+                    <h3>What is Multiple Regression?</h3>
+                    <p>Multiple regression is a statistical technique that predicts an outcome (dependent variable) based on multiple predictor variables (independent variables).</p>
+                    
+                    <h3>Our Salary Prediction Model</h3>
+                    <p>Our model uses the following formula:</p>
+                    <p><strong>Salary = β₀ + β₁(Experience) + β₂(Education) + β₃(Location) + β₄(Industry)</strong></p>
+                    
+                    <p>Where:</p>
+                    <ul>
+                        <li>β₀ is the base salary (intercept)</li>
+                        <li>β₁ is the coefficient for years of experience</li>
+                        <li>β₂ is the coefficient for education level</li>
+                        <li>β₃ is the coefficient for location</li>
+                        <li>β₄ is the coefficient for industry</li>
+                    </ul>
+                    
+                    <h3>Visualization</h3>
+                    <div class="chart-container">
+                        <canvas id="regressionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>Job Salaries Prediction with Multiple Regression | Educational Demo</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Multiple regression coefficients (simplified model)
+        const coefficients = {
+            intercept: 30000,
+            experience: 2500,
+            education: 8000,
+            location: 5000,
+            industry: 7000
+        };
+
+        // Form submission handler
+        document.getElementById('salaryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Add loading state
+            const predictBtn = document.getElementById('predictBtn');
+            predictBtn.textContent = 'Calculating...';
+            predictBtn.classList.add('loading');
+            
+            // Simulate processing time for better UX
+            setTimeout(() => {
+                // Get input values
+                const experience = parseFloat(document.getElementById('experience').value);
+                const education = parseFloat(document.getElementById('education').value);
+                const location = parseFloat(document.getElementById('location').value);
+                const industry = parseFloat(document.getElementById('industry').value);
+                
+                // Validate inputs
+                if (isNaN(experience) || isNaN(education) || isNaN(location) || isNaN(industry)) {
+                    alert('Please fill in all fields with valid numbers');
+                    predictBtn.textContent = 'Predict Salary';
+                    predictBtn.classList.remove('loading');
+                    return;
+                }
+                
+                // Calculate predicted salary using multiple regression formula
+                const predictedSalary = coefficients.intercept + 
+                                       (coefficients.experience * experience) + 
+                                       (coefficients.education * education) + 
+                                       (coefficients.location * location) + 
+                                       (coefficients.industry * industry);
+                
+                // Format and display result
+                const formattedSalary = new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    maximumFractionDigits: 0
+                }).format(predictedSalary);
+                
+                document.getElementById('predictedSalary').textContent = formattedSalary;
+                document.getElementById('result').style.display = 'block';
+                
+                // Update chart
+                updateChart(experience, education, location, industry, predictedSalary);
+                
+                // Reset button
+                predictBtn.textContent = 'Predict Salary';
+                predictBtn.classList.remove('loading');
+                
+            }, 500); // Small delay for better UX
+        });
+
+        // Initialize chart
+        let regressionChart;
+        const initializeChart = () => {
+            const ctx = document.getElementById('regressionChart').getContext('2d');
+            regressionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Base Salary', 'Experience', 'Education', 'Location', 'Industry', 'Total'],
+                    datasets: [{
+                        label: 'Salary Components ($)',
+                        data: [30000, 0, 0, 0, 0, 30000],
+                        backgroundColor: [
+                            'rgba(37, 117, 252, 0.7)',
+                            'rgba(106, 17, 203, 0.7)',
+                            'rgba(37, 117, 252, 0.5)',
+                            'rgba(106, 17, 203, 0.5)',
+                            'rgba(37, 117, 252, 0.3)',
+                            'rgba(106, 17, 203, 0.9)'
+                        ],
+                        borderColor: [
+                            'rgba(37, 117, 252, 1)',
+                            'rgba(106, 17, 203, 1)',
+                            'rgba(37, 117, 252, 1)',
+                            'rgba(106, 17, 203, 1)',
+                            'rgba(37, 117, 252, 1)',
+                            'rgba(106, 17, 203, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Salary ($)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Salary Components Breakdown'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `$${context.parsed.y.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        // Update chart with new data
+        function updateChart(experience, education, location, industry, total) {
+            const experienceValue = coefficients.experience * experience;
+            const educationValue = coefficients.education * education;
+            const locationValue = coefficients.location * location;
+            const industryValue = coefficients.industry * industry;
+            
+            regressionChart.data.datasets[0].data = [
+                coefficients.intercept,
+                experienceValue,
+                educationValue,
+                locationValue,
+                industryValue,
+                total
+            ];
+            
+            regressionChart.update();
+        }
+
+        // Initialize with default values when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeChart();
+            // Trigger initial calculation
+            document.getElementById('salaryForm').dispatchEvent(new Event('submit'));
+        });
+    </script>
+</body>
+</html>
